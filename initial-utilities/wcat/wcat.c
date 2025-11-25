@@ -1,7 +1,5 @@
 #include <stdio.h>
 
-// With no FILE, or when FILE is -, read standard input.
-
 // With FILE, no tag
 int print_file(const char *filename) {
   FILE *file = fopen(filename, "r");
@@ -12,6 +10,7 @@ int print_file(const char *filename) {
 
   char ch;
   while ((ch = fgetc(file)) != EOF) {
+    // plush stream to stdout from buffer
     putchar(ch);
   }
 
@@ -20,9 +19,6 @@ int print_file(const char *filename) {
 }
 
 int main(int argc, char *argv[]) {
-  FILE *file;
-  char ch;
-
   if (argc < 2) {
     return 0;
   }
