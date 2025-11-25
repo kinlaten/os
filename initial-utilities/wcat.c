@@ -1,39 +1,34 @@
+#include <stdio.h>
+
+// With no FILE, or when FILE is -, read standard input.
+
+// With FILE, no tag
+int print_file(const char *filename) {
+  FILE *file = fopen(filename, "r");
+  if (file == NULL) {
+    printf("wcat: cannot open file\n");
+    return 1;
+  }
+
+  char ch;
+  while ((ch = fgetc(file)) != EOF) {
+    putchar(ch);
+  }
+
+  fclose(file);
+  return 0;
+}
+
 int main(int argc, char *argv[]) {
-  /*
-     With no FILE, or when FILE is -, read standard input.
+  if (argc < 2) {
+    return 0;
+  }
 
+  for (int i = 1; i < argc; i++) {
+    if (print_file(argv[i]) != 0) {
+      return 1; // Exit main with an error code
+    }
+  }
 
-     -A, --show-all
-            equivalent to -vET
-
-     -b, --number-nonblank
-            number nonempty output lines, overrides -n
-
-     -e     equivalent to -vE
-
-     -E, --show-ends
-            display $ at end of each line
-
-     -n, --number
-            number all output lines
-
-     -s, --squeeze-blank
-            suppress repeated empty output lines
-
-     -t     equivalent to -vT
-
-     -T, --show-tabs
-            display TAB characters as ^I
-
-     -u     (ignored)
-
-     -v, --show-nonprinting
-            use ^ and M- notation, except for LFD and TAB
-
-     --help display this help and exit
-
-     --version
-            output version information and exit
-   * */
   return 0;
 }
