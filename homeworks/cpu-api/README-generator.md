@@ -1,6 +1,4 @@
 
-# Overview: `generator.py`
-
 This tool, `generator.py`, allows the user to create little C programs
 that exercise `fork` in different ways so as to gain better
 understanding of how `fork` works.
@@ -30,6 +28,7 @@ void wait_or_die() {
 int fork_or_die() {
     int rc = fork();
     assert(rc >= 0);
+    printf("%d",rc);
     return rc;
 }
 
