@@ -446,3 +446,133 @@ z=o
 ```
 
 -> secret key is: `yonuvw`
+
+# Phase 6
+
+Code in C as follow:
+
+```c
+struct Node {
+    int value;     // Offset 0x0
+    int id;        // Offset 0x4
+    struct Node* next; // Offset 0x8
+};
+
+void phase_6(char* input_str) {
+    int nums[6];           // Space reserved by: sub $0x50, %rsp
+    struct Node* nodes[6]; // Space starting at: 0x20(%rsp)
+
+    /* --- STEP 0: Input --- */
+    // 401103: mov %rsp, %rsi
+    // 401106: call 40145c <read_six_numbers>
+    read_six_numbers(input_str, nums);
+
+    /* --- STEP 1: Validation Loop (Uniqueness & Range) --- */
+    // 40110e: mov $0x0, %r12d (i = 0)
+    for (int i = 0; i < 6; i++) {
+        // 401117: mov 0x0(%r13), %eax
+        // 40111b: sub $0x1, %eax
+        // 40111e: cmp $0x5, %eax
+        if ((unsigned int)(nums[i] - 1) > 5) { // 401121: jbe (jump if below or equal)
+            explode_bomb(); // 401123: call explode_bomb
+        }
+
+        // 401128: add $0x1, %r12d
+        // 401132: mov %r12d, %ebx (j = i + 1)
+        for (int j = i + 1; j < 6; j++) {
+            // 401138: mov (%rsp,%rax,4), %eax
+            // 40113b: cmp %eax, 0x0(%rbp)
+            if (nums[i] == nums[j]) {
+                explode_bomb(); // 401140: call explode_bomb
+            }
+            // 401145: add $0x1, %ebx
+        }
+        // 40114d: add $0x4, %r13 (Move to next input number)
+    }
+
+    /* --- STEP 2: Transformation (7 - x) --- */
+    // 40115b: mov $0x7, %ecx
+    for (int i = 0; i < 6; i++) {
+        // 401162: sub (%rax), %edx (edx = 7 - nums[i])
+        // 401164: mov %edx, (%rax) (nums[i] = edx)
+        nums[i] = 7 - nums[i];
+        // 401166: add $0x4, %rax
+    }
+
+    /* --- STEP 3: Linked List Mapping --- */
+    // This loop populates a list of pointers at 0x20(%rsp)
+    // 40116f: mov $0x0, %esi (index = 0)
+    for (int i = 0; i < 6; i++) {
+        // 401197: mov (%rsp,%rsi,1), %ecx (get nums[i])
+        struct Node* curr = (struct Node*)0x6032d0; // 401183: mov $0x6032d0, %edx
+
+        // 401176: mov 0x8(%rdx), %rdx (Walk the list)
+        for (int j = 1; j < nums[i]; j++) {
+            curr = curr->next;
+        }
+        // 401188: mov %rdx, 0x20(%rsp,%rsi,2) (Save node pointer to stack)
+        nodes[i] = curr;
+    }
+
+    /* --- STEP 4: Relinking the List --- */
+    // 4011ab: mov 0x20(%rsp), %rbx (Get first node pointer)
+    struct Node* head = nodes[0];
+    struct Node* temp = head;
+    for (int i = 1; i < 6; i++) {
+        // 4011bd: mov (%rax), %rdx
+        // 4011c0: mov %rdx, 0x8(%rcx) (Set current->next = next_node)
+        temp->next = nodes[i];
+        temp = nodes[i];
+    }
+    // 4011d2: movq $0x0, 0x8(%rdx) (Last node -> next = NULL)
+    temp->next = NULL;
+
+    /* --- STEP 5: Final Descending Check --- */
+    // 4011da: mov $0x5, %ebp (Loop 5 times for 6 nodes)
+    struct Node* curr = head;
+    while (ebp != 0) {
+        // 4011df: mov 0x8(%rbx), %rax
+        // 4011e3: mov (%rax), %eax (get value of next node)
+        // 4011e5: cmp %eax, (%rbx) (compare current->value with next->value)
+        if (curr->value < curr->next->value) { // 4011e7: jge (jump if greater/equal)
+            explode_bomb(); // 4011e9: call explode_bomb
+        }
+        curr = curr->next; // 4011ee: mov 0x8(%rbx), %rbx
+        // 4011f2: sub $0x1, %ebp
+    }
+}
+```
+
+So we know that input is:
+
+- 6 ints
+- each int of functions read_six_numbers return is between 1 and 6
+- No 2 ints are same
+  -> numbers\[6\]={1, 2, 3, 4, 5, 6} elements can in any order
+
+See each node take 4B int, 4B id, 8B pointer -> total 16 Bytes -> 2 giant words (each giantword is 8B)
+
+```sh
+(gdb) x/12gx 0x6032d0
+0x6032d0 <node1>:       0x000000010000014c      0x00000000006032e0
+0x6032e0 <node2>:       0x00000002000000a8      0x00000000006032f0
+0x6032f0 <node3>:       0x000000030000039c      0x0000000000603300
+0x603300 <node4>:       0x00000004000002b3      0x0000000000603310
+0x603310 <node5>:       0x00000005000001dd      0x0000000000603320
+0x603320 <node6>:       0x00000006000001bb      0x0000000000000000
+```
+
+`value` is int, so it take first lower 4Bytes
+
+```txt
+node1 0x14c (322)
+node2 0xa8 (168)
+node3 0x39c (924)
+node4 0x2b3 (691)
+node5 0x1dd (477)
+node6 0x1bb (443)
+```
+
+So we order these node in descending order as `3 4 5 6 1 2` -> input numbers
+
+Put them through transformation `7-numbers[i]`: secret key is `4 3 2 1 6 5`
