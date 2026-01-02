@@ -337,3 +337,112 @@ int func4(int a, int low, int high) {
 func4 take 3 args so that means %edi,%esi(=0),%edx(=14) are used.
 
 So we add main() to test what value return from func4 at root (first try): we have 0, 1, 3, 7 for %rdi which return %eax=0
+
+# Phase 5
+
+```c
+#include <stdint.h>
+#include <string.h>
+#include <stdbool.h>
+
+extern int string_length(const char *str);
+extern void explode_bomb(void);
+extern int strings_not_equal(const char *s1, const char *s2);
+
+void phase_5(const char *input) {
+    // Simulate stack canary check
+    uintptr_t canary = *(uintptr_t *)((char *)&canary - sizeof(uintptr_t)); // placeholder for fs:0x28
+    uintptr_t canary_check = canary;
+
+    int len = string_length(input);
+    if (len != 6) {
+        explode_bomb();
+    }
+
+    unsigned char mapped[7] = {0}; // 6 chars + null terminator
+    static const unsigned char lookup_table[16] = {
+        // This corresponds to the data at 0x4024b0 in assembly
+        // Since we don't have the exact values, we assume it's a 16-byte lookup table.
+        // You need to fill this with the actual values from the binary.
+        0x??, 0x??, 0x??, 0x??, 0x??, 0x??, 0x??, 0x??,
+        0x??, 0x??, 0x??, 0x??, 0x??, 0x??, 0x??, 0x??
+    };
+
+    for (int i = 0; i < 6; i++) {
+        unsigned char c = (unsigned char)input[i];
+        unsigned char index = c & 0xf;
+        mapped[i] = lookup_table[index];
+    }
+    mapped[6] = '\0';
+
+    static const char *target = (const char *)0x40245e; // address of target string in assembly
+    // You need to replace this with the actual target string from the binary.
+    // For example:
+    // static const char *target = "target_string";
+
+    if (strings_not_equal(mapped, target)) {
+        explode_bomb();
+    }
+
+    if (canary != canary_check) {
+        // stack smashing detected
+        __stack_chk_fail();
+    }
+}
+```
+
+Translate assembly to C as above we see 0x4024b0 might be start address of lookup_table: `maduiersnfotvbyl`
+
+```sh
+(gdb) x/s 0x4024b0
+0x4024b0 <array.3449>:  "maduiersnfotvbylSo you think you can stop the bomb with ctrl-c, do you?"
+```
+
+As loop run 6 times, this means secret string should be 6 chars
+
+```sh
+(gdb) x/s $rbx
+0x6038c0 <input_strings+320>:   "flyers"
+```
+
+So that mean we need to find secret key that are translated into `flyers`
+
+By try all alphabets, each try with 6 chars e.g. abcdef, ghijkl ... . And use command
+
+```sh
+(gdb) until *0x00000000004010bd  #=> 0x00000000004010bd <+91>:    call   0x401338 <strings_not_equal>
+(gdb) x/s $rdi # return translated string
+```
+
+Thus we create this lookup_table
+
+```txt
+a=a
+b=d
+c=u
+d=i
+e=e 4
+f=r 5
+g=s 6
+h=n
+i=f 1
+j=o
+k=t
+l=v
+m=b
+n=y 3
+o=l 2
+p=m
+q=a
+r=d
+s=u
+t=i
+u=e 4
+v=r 5
+w=s 6
+x=n
+y=f 1
+z=o
+```
+
+-> secret key is: `yonuvw`

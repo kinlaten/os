@@ -427,8 +427,8 @@ Disassembly of section .text:
   400fdb:	01 c8                	add    %ecx,%eax
   400fdd:	d1 f8                	sar    $1,%eax
   400fdf:	8d 0c 30             	lea    (%rax,%rsi,1),%ecx
-  400fe2:	39 f9                	cmp    %edi,%ecx
   400fe4:	7e 0c                	jle    400ff2 <func4+0x24>
+  400fe2:	39 f9                	cmp    %edi,%ecx
   400fe6:	8d 51 ff             	lea    -0x1(%rcx),%edx
   400fe9:	e8 e0 ff ff ff       	call   400fce <func4>
   400fee:	01 c0                	add    %eax,%eax
