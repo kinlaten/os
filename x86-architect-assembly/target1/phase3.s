@@ -1,4 +1,3 @@
-movq %rdi, %rsi
-movq $0x59b997fa, %rdi
+movq $0x5561dcb0, %rdi
 retq
 

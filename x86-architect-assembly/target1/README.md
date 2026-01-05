@@ -142,3 +142,14 @@ so we modify
 78 dc 61 55 00 00 00 00 # this is actually address which %rdi saved before modified, it trigger when getbuf() do ret func, which execute first line of buf (injected code)
 ec 17 40 00 00 00 00 00 # overwrite return address second time, return to touch2
 ```
+
+`call` func -8 Byte from stack pointer and `ret` func +8 Byte to stack pointer
+
+# Phase 3
+
+See how similar to phase2 but args for touch3() is pointer to char instead of value as touch2() so we need to pass value into memory then tell %rdi points to that memory segment instead of directly assign constant to %rdi
+
+Where should we save value of cookie?
+Somewhere safe: already allocated stack segment !! not safe for ethical user but for hacker, perfect!
+
+Let save it to %rsp + 40 + 8(address of injected code) + 8(return address) + 8(where cookie save) = %rsp + 64 (0x40) = 0x5561dc78 + 0x40 =0x5561dcb8
